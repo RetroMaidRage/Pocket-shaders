@@ -5,7 +5,7 @@ uniform sampler2D texture;
 varying vec2 texcoord;
 varying vec4 glcolor;
 
-//#define OnlyTorches
+#define OnlyTorches
 
 void main() {
 

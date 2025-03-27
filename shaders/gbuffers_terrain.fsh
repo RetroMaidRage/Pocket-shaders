@@ -76,7 +76,7 @@ vec3 TextureNormals = normalize(TNormals);
 //---------------------------------------------------CAUSIC-------------------------------------------------
 
 #ifdef UglyNormalMapping
-vec4 Albedo = texture2D(texture, TexCoords)*TextureNormals.r*2   * Color;
+vec4 Albedo = texture2D(texture, TexCoords)*TNormals.r*2   * Color;
 #else
 vec4 Albedo = texture2D(texture, TexCoords) * Color;
 #endif

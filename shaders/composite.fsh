@@ -5,20 +5,20 @@
 #define FogEnd 130  //[0 5 10 20 30 40 50 60 70 80 90 100 200 300 500 1000]
 #define FogDensity 1     //[0 0.1 0.2 0.3 0.4 0.5 0.6 0.7 0.8 0.9 1.0 2.0 3.0]
 #define ShadowDarkness 1.35 //[0.1 0.2 0.3 0.4 0.5 0.6 0.7 0.8 0.9 1 1.1 1.2 1.3 1.4 1.5 1.6 1.7 1.8 1.9 2 3 4]
-#define LambertFactor 0
+ 
 #define Ambient 0.55
 
 #define FogAffectSky 0 //[0 0.1 0.2 0.3 0.4 0.5 0.6 0.7 0.8 0.9 1.0]
 #define FogAffectClouds 0.75 //[0 0.1 0.2 0.3 0.4 0.5 0.6 0.7 0.8 0.9 1.0]
 #define LinearFog
 
-#define Godrays
+//#define Godrays
 #define  density 1.0          //[0 0.1 0.2 0.3 0.4 0.5 0.6 0.7 0.8 0.9 1.0 2.0 3.0]
 #define  power 1.0         //[0.1 0.2 0.3 0.4 0.5 0.6 0.7 0.8 0.9 1.0 1.1 1.2 1.3 1.4 1.5 1.6 1.7 1.8 1.9 2 3 4]
 #define  jitter_quallity 0.5  //[0.1 0.2 0.3 0.4 0.5 0.6 0.7 0.8 0.9 1.0 2.0 3.0]
 #define  decay 0.95       //[0.8 0.9 0.91 0.92 0.93 0.94 0.95 0.96 0.97 0.98 0.99 1.0  1.1 1.2 1.3 1.4 1.5 1.6 1.7 1.8 1.9 2 3 4]      // Затухание (например, 0.95)
 #define  samples 8     //[2 4 8 16 32 64 128]
-#define Transmittance
+//#define Transmittance
 //#define DebugMode
 #define Renderer colortex1 //[colortex0 colortex1 colortex2 colortex4 colortex5 colortex6 colortex7 depthtex0]
 //--------------------------------------------------------------------------------------------
@@ -128,7 +128,7 @@ vec3 Lighting = SkyLighting + LightLighting;
 
 
 
-return Lighting*1.25;
+return Lighting*1.1;
 }
 float getDepth(vec2 coord) {
     return 2.0 * near * far / (far + near - (2.0 * texture2D(depthtex0, coord).x - 1.0) * (far - near));
