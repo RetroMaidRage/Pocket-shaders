@@ -18,7 +18,7 @@
 #define  jitter_quallity 0.5  //[0.1 0.2 0.3 0.4 0.5 0.6 0.7 0.8 0.9 1.0 2.0 3.0]
 #define  decay 0.95       //[0.8 0.9 0.91 0.92 0.93 0.94 0.95 0.96 0.97 0.98 0.99 1.0  1.1 1.2 1.3 1.4 1.5 1.6 1.7 1.8 1.9 2 3 4]      // Затухание (например, 0.95)
 #define  samples 8     //[2 4 8 16 32 64 128]
-
+#define Transmittance
 //#define DebugMode
 #define Renderer colortex1 //[colortex0 colortex1 colortex2 colortex4 colortex5 colortex6 colortex7 depthtex0]
 //--------------------------------------------------------------------------------------------
@@ -35,6 +35,7 @@ uniform sampler2D colortex2;
 uniform sampler2D colortex6;
 uniform sampler2D colortex7;
 uniform sampler2D depthtex0;
+uniform sampler2D depthtex1;
 uniform sampler2D gaux5;
 uniform vec3 skyColor;
 uniform vec3 fogColor;
@@ -131,6 +132,11 @@ return Lighting*1.25;
 }
 float getDepth(vec2 coord) {
     return 2.0 * near * far / (far + near - (2.0 * texture2D(depthtex0, coord).x - 1.0) * (far - near));
+}
+
+float get_linear_depth(in float depth)
+{
+      return 2.0 * near * far / (far + near - (2.0 * depth - 1.0) * (far - near));
 }
 
 mat3 tbnNormalTangent(vec3 normal, vec3 tangent) {
@@ -275,17 +281,35 @@ float dotProduct = dot(normalize(shadowLightPosition), cameraPosition);
 #endif
 if(Depth == 1.0f ){ //if it is Sky
 
-    gl_FragData[0] = mix(color, vec4(mix(color.rgb, FogColor, Fog), 1.0), FogAffectSky);
+    gl_FragData[0] = mix(color, vec4(mix(color.rgb, FogColor, Fog), 1.0), FogAffectSky) ;
     return;
 }
 
 if(isCloud){
 
-  Diffuse = mix(color, vec4(mix(Diffuse.rgb, FogColor, Fog), 1.0), FogAffectClouds);
+  Diffuse = mix(color, vec4(mix(Diffuse.rgb, FogColor, Fog), 1.0), FogAffectClouds) ;
+
 }
 
   if(Id == 1.0){
+#ifdef Transmittance
+    float depth_solid = get_linear_depth(texture2D(depthtex0, TexCoords).x);
+    float depth_translucent = get_linear_depth(texture2D(depthtex1, TexCoords).x);
+
+    float dist_fog = distance(depth_solid, depth_translucent);
+
+
+    vec3 absorption = exp(-vec3(0.10)/4 * dist_fog) ;
+
+    if (dist_fog <= 0.3){
+    Diffuse.rgb += vec3(0.1);
+    }
+    Diffuse.rgb *= absorption  ;
+
+    #endif
 Diffuse = Diffuse;
+ Diffuse.rgb = mix(Diffuse.rgb, FogColor, Fog);
+
   }
 
 

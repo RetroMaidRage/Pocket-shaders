@@ -19,7 +19,8 @@ varying vec3 shadowLightPosition;
 varying vec3 SkyPos;
 uniform float rainStrength;
 flat out int BlockID;
-
+uniform sampler2D normals;
+varying vec3 NormalWT;
 //--------------------------------------------DEFINE------------------------------------------
 #define waving_grass
 #define waving_leaves_speed 0.1 ///[0.1 0.2 0.3 0.4 0.5 0.6 0.7 0.8 0.9 1.0 1.1 1.2 1.3 1.4 1.5 1.6 1.7 1.8 1.9 2.0 3.0 4.0 5.0 6.0 7.0 8.0 9.0 10 15 20]
@@ -99,7 +100,7 @@ gl_Position = gl_ProjectionMatrix * vpos;
     LightmapCoords = (LightmapCoords * 33.05f / 32.0f) - (1.05f / 32.0f);
 
     Normal = gl_NormalMatrix * gl_Normal;
-
+ 
 
 
     Color = gl_Color;
