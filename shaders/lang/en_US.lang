@@ -1,0 +1,12 @@
+screen.Misc=§cMisc
+screen.Credits=§fDeveloped §fby §6Retro§cMaid§bRage
+screen.Shadows_Lighting=Shadows and Lighting
+screen.AntiAliasing=AntiAliasing
+screen.Customization = Customization
+
+profile.LightmapLow= §eLightmap §cLow
+profile.LightmapHigh = §eLightmap §aHigh
+profile.RenderingLow= §6Rendering §eLow
+profile.RenderingHigh = §6Rendering §aHigh
+//§4C§cu§cs§et§6o§2m§2i§az§ba§3t§1i§9o§5n
+option.UseTechFog = UseTechFog(composite7)
