@@ -4,6 +4,8 @@
 #ifdef WaterSpecularTech
 
 #endif
+
+#define SpecularTerrain
 //----------------------------------------------------UNIFORMS----------------------------------------------
 varying vec2 TexCoords;
 varying vec2 LightmapCoords;
@@ -68,11 +70,11 @@ vec3 TextureNormals = normalize(TNormals);
   vec3 viewDir = -normalize(viewPos);
   vec3 halfDir = normalize(lightDir + viewDir);
   vec3 reflectDir = reflect(lightDir, viewDir);
-
+   vec3 R = reflect(-ShadowLightPosition, Normal);
     float NdotL = max(dot(TNormals, normalize(lightDir)), 0.0f);
 
     float SpecularAngle = pow(max(dot(halfDir, Normal*texture2D(texture, TexCoords).rgb), 0.0), SpecularRadius);
-
+    float SpecularAngleT = pow(max(dot(halfDir, Normal*texture2D(texture, TexCoords).rgb), 0.0), 12);
 //---------------------------------------------------CAUSIC-------------------------------------------------
 
 #ifdef UglyNormalMapping
@@ -89,6 +91,13 @@ if(id == 1){
  Albedo.a = Transparency;
 }
 
+#ifdef SpecularTerrain
+if(id == 5){
+
+ Albedo += (SpecularAngleT *mix(vec4(1), vec4(fogColor, 1), 0.5))*5*SpecularIntesity;
+
+}
+#endif
 
   vec4 Lightmap = texture2D(lightmap, LightmapCoords);
   float LightmapSmooth =  smoothstep(0.95,smoothstep(0.91,0.95,1.0),lmcoord.y);

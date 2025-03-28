@@ -11,9 +11,9 @@ varying vec4 glcolor;
 
 void main() {
 float Depth = texture2D(depthtex0, texcoord.xy).r;
-	vec3 color = texture2D(texture, texcoord).rgb;
-	//vec3 multipassBloom = pow(texture2D(colortex5, texcoord).rgb, vec3(2.2f));
-	vec3 multipassBloom = texture2D(colortex5, texcoord).rgb;
+vec3 color = texture2D(texture, texcoord).rgb;
+vec3 multipassBloom = texture2D(colortex5, texcoord).rgb;
+
 vec4 output = vec4(color ,1.0f );
 
 #ifdef FastMultipassBloom

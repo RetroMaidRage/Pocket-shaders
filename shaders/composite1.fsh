@@ -6,13 +6,14 @@ varying vec2 texcoord;
 varying vec4 glcolor;
 
 #define OnlyTorches
+#define FastMultipassBloom
 
 void main() {
 
-	vec3 color = texture2D(texture, texcoord).rgb;
+vec3 color = texture2D(texture, texcoord).rgb;
 
-   float brightness = dot(color, vec3(0.299, 0.587, 0.114));
-   bool isBright = brightness > 0.7;
+float brightness = dot(color, vec3(0.299, 0.587, 0.114));
+bool isBright = brightness > 0.7;
 
    #ifdef OnlyTorches
 
@@ -22,12 +23,13 @@ void main() {
        bool isYellow = color.r > 0.9;
 
        #endif
+			 
 /* DRAWBUFFERS:4 */
-
+#ifdef FastMultipassBloom
 if (isBright && isYellow) {
        gl_FragData[0] = vec4(color, 1.0f);
    } else {
        gl_FragData[0] = vec4(0.0);
    }
-
+#endif
 }

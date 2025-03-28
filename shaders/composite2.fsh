@@ -3,7 +3,8 @@ uniform sampler2D colortex4;
 varying vec2 texcoord;
 uniform float blurSize;
 uniform float weight[5] = float[] (0.227027, 0.1945946, 0.1216216, 0.054054, 0.016216);
-#define BloomRadius 128 //[ 8 16 32 48 64 96 128 256 512]
+#define FastMultipassBloom
+#define BloomRadius 256 //[ 8 16 32 48 64 96 128 256 512]
 #define BloomIntensity 0.5 //[ 0.1 0.2 0.3 0.4 0.5 0.6 0.7 0.8 0.9 1.0 2.0 3.0]
 //#define BiliaterBlurBloom
 vec3 BiliaterBlur(vec2 uv) {
@@ -45,5 +46,8 @@ void main() {
 sum.rgb = BiliaterBlur(texcoord);
 #endif
     /* DRAWBUFFERS:5   */
+    #ifdef FastMultipassBloom
     	gl_FragData[0] =  sum * BloomIntensity;
+
+      #endif
 }
