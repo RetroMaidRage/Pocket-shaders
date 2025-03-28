@@ -33,7 +33,7 @@
 //#define Transmittance
 
 //#define DebugMode
-#define Renderer colortex1 //[colortex0 colortex1 colortex2 colortex4 colortex5 colortex6 colortex7 depthtex0 ]
+#define Renderer colortex1 //[colortex0 colortex1 colortex2 colortex4 colortex5 colortex6 colortex7 depthtex0 shadowtex0 ]
 //--------------------------------------------------------------------------------------------
 varying vec4 texcoord;
 varying vec2 TexCoords;
@@ -62,7 +62,7 @@ uniform float near;
 uniform float far;
 uniform sampler2D normals;
 uniform vec3 shadowLightPosition;
-
+uniform sampler2D shadowtex0;
 uniform ivec2 eyeBrightnessSmooth;
 uniform ivec2 eyeBrightness;
 
@@ -82,7 +82,7 @@ float TimeSunrise  = ((clamp(timefract, 23000.0, 24000.0) - 23000.0) / 1000.0) +
 float TimeNoon     = ((clamp(timefract, 0.0, 4000.0)) / 4000.0) - ((clamp(timefract, 8000.0, 12000.0) - 8000.0) / 4000.0);
 float TimeSunset   = ((clamp(timefract, 8000.0, 12000.0) - 8000.0) / 4000.0) - ((clamp(timefract, 12000.0, 12750.0) - 12000.0) / 750.0);
 float TimeMidnight = ((clamp(timefract, 12000.0, 12750.0) - 12000.0) / 750.0) - ((clamp(timefract, 23000.0, 24000.0) - 23000.0) / 1000.0);
-const float sunPathRotation = -10.0f;
+const float sunPathRotation = -20.0f;
 vec3 TimeColor = (fogColor*TimeSunrise +fogColor*TimeNoon + fogColor*TimeSunset +fogColor*TimeMidnight);
 //---------------------------------------------------------------------------------------------------------------------------------------------------------------------
 //--------------------------------------------------------------------------------------------
@@ -90,12 +90,6 @@ vec3 TimeColor = (fogColor*TimeSunrise +fogColor*TimeNoon + fogColor*TimeSunset 
 float rand(vec2 co) {
     return fract(sin(dot(co, vec2(12.9898, 78.233))) * 43758.5453);
 }
-
-float henyeyGreenstein(float g, float cosTheta) {
-    float g2 = g * g;
-    return (1.0 - g2) / (4.0 * 3.141592653589793 * pow(1.0 + g2 - 2.0 * g * cosTheta, 1.5));
-}
-
 
 vec3 BiliaterBlur(vec2 uv) {
   vec3 color = texture2D(texture, uv).rgb * 0.2;
@@ -270,7 +264,7 @@ if(Id == 1.0){
     float depth_translucent = get_linear_depth(texture2D(depthtex1, TexCoords).x);
 
     float dist_fog = distance(depth_solid, depth_translucent);
-
+//dist btw solid and fog
 
     vec3 absorption = exp(-vec3(0.10)/4 * dist_fog) ;
 
