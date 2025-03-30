@@ -99,8 +99,7 @@ if(id == 5){
 }
 #endif
 
-  vec4 Lightmap = texture2D(lightmap, LightmapCoords);
-  float LightmapSmooth =  smoothstep(0.95,smoothstep(0.91,0.95,1.0),lmcoord.y);
+
 
 
 

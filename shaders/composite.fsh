@@ -7,15 +7,18 @@
 #define FogAffectClouds 0.75 //[0 0.1 0.2 0.3 0.4 0.5 0.6 0.7 0.8 0.9 1.0]
 
 #define FogStart 20     //[0 5 10 20 30 40 50 60 70 80 90 100 200 300 500 1000]
-#define FogEnd 130  //[0 5 10 20 30 40 50 60 70 80 90 100 200 300 500 1000]
+#define FogEnd 300  //[0 5 10 20 30 40 50 60 70 80 90 100 200 300 500 1000]
 #define FogDensity 1     //[0 0.1 0.2 0.3 0.4 0.5 0.6 0.7 0.8 0.9 1.0 2.0 3.0]
 
 #define SmoothShadows
 #define ShadowDarkness 1.25 //[0.1 0.2 0.3 0.4 0.5 0.6 0.7 0.8 0.9 1 1.1 1.2 1.3 1.4 1.5 1.6 1.7 1.8 1.9 2 3 4]
 
+//#define RenderShadowMap
+#define ShadowMapIntensity 0.1  //[0.05 0.1 0.11 0.12 0.13 0.14 0.15 0.16 0.17 0.18 0.19 0.2 0.21 0.22 0.23 0.24 0.25 0.26 0.27 0.28 0.29 0.3]
+
 #define Flickr
 #define FlickrSpeed 10 //[0.1 0.2 0.3 0.4 0.5 0.6 0.7 0.8 0.9 1 2 3 4 5 6 7 8 9 10 15 20 30 40 50]
-#define FlickrIntensity 12  //[0.1 0.2 0.3 0.4 0.5 0.6 0.7 0.8 0.9 1 2 3 4 5 6 7 8 9 10 11 12 13 14 15 16 17 18 19 20 30 40 50]
+#define FlickrIntensity 16  //[0.1 0.2 0.3 0.4 0.5 0.6 0.7 0.8 0.9 1 2 3 4 5 6 7 8 9 10 11 12 13 14 15 16 17 18 19 20 30 40 50]
 
 #define Ambient 0.55
 #define LMapR 1   //[0.1 0.2 0.3 0.4 0.5 0.6 0.7 0.8 0.9 1 1.1 1.2 1.3 1.4 1.5 1.6 1.7 1.8 1.9 2 2.1 2.2 2.3 2.4 2.5 2.6 2.7 2.8 2.9 3 4 5 6 7 8 9 10 15 20 30 40 50]
@@ -28,7 +31,7 @@
 #define  jitter_quallity 0.5  //[0.1 0.2 0.3 0.4 0.5 0.6 0.7 0.8 0.9 1.0 2.0 3.0]
 #define  decay 0.95       //[0.8 0.9 0.91 0.92 0.93 0.94 0.95 0.96 0.97 0.98 0.99 1.0  1.1 1.2 1.3 1.4 1.5 1.6 1.7 1.8 1.9 2 3 4]      // Затухание (например, 0.95)
 #define  samples 8     //[2 4 8 16 32 64 128]
-#define SkyColorAffectLightmap 0.75   //[0 0.1 0.2 0.3 0.4 0.5 0.6 0.7 0.8 0.9 1.0
+#define SkyColorAffectLightmap 0.25 //[0.1 0.15 0.2 0.25 0.3 0.35 0.4 0.45 0.5 0.55 0.6 0.7 0.7 0.8 0.9 1.0]
 #define DetectWaterDepth
 //#define Transmittance
 
@@ -63,13 +66,24 @@ uniform float far;
 uniform sampler2D normals;
 uniform vec3 shadowLightPosition;
 uniform sampler2D shadowtex0;
+uniform sampler2D shadowtex0HW;
 uniform ivec2 eyeBrightnessSmooth;
 uniform ivec2 eyeBrightness;
 
-in vec4 at_tangent;
-in vec3 vaNormal;
 
-const float ambientOcclusionLevel = 1.0f;
+
+#ifdef RenderShadowMap
+uniform mat4 shadowProjection;
+uniform mat4 shadowModelView;
+const float shadowIntervalSize = 100; // [1 10 50 100]
+const int shadowMapResolution = 512;  // [32 64 128 256 512 1024 2048 4096 8192]
+const float shadowDistance = 90.0f; // [12.0f 32.0f 48.0f 64.0f 84.0f 120.0f 160.0f 200.0f]
+const bool shadowtexNearest = false;
+const bool shadowcolor0Nearest = false;
+#endif
+
+
+const float ambientOcclusionLevel = 1.0f; //[0.0f 1.0f]
 const float eyeBrightnessHalflife = 3.0f;
 
 float eyeAdaptY = eyeBrightnessSmooth.y / 240.0; //sky
@@ -82,7 +96,7 @@ float TimeSunrise  = ((clamp(timefract, 23000.0, 24000.0) - 23000.0) / 1000.0) +
 float TimeNoon     = ((clamp(timefract, 0.0, 4000.0)) / 4000.0) - ((clamp(timefract, 8000.0, 12000.0) - 8000.0) / 4000.0);
 float TimeSunset   = ((clamp(timefract, 8000.0, 12000.0) - 8000.0) / 4000.0) - ((clamp(timefract, 12000.0, 12750.0) - 12000.0) / 750.0);
 float TimeMidnight = ((clamp(timefract, 12000.0, 12750.0) - 12000.0) / 750.0) - ((clamp(timefract, 23000.0, 24000.0) - 23000.0) / 1000.0);
-const float sunPathRotation = -20.0f;
+const float sunPathRotation = -20.0f; //[-240f -120f -90f -60f -30f -20.0f 0f 30f 60f 120f 240f]
 vec3 TimeColor = (fogColor*TimeSunrise +fogColor*TimeNoon + fogColor*TimeSunset +fogColor*TimeMidnight);
 //---------------------------------------------------------------------------------------------------------------------------------------------------------------------
 //--------------------------------------------------------------------------------------------
@@ -130,7 +144,7 @@ vec3 LightmapSetup(in vec2 LMap)
 
 float cave = smoothstep(1.0, 0.7, LMap.y);
 
-vec3 SkyLighting = LMap.y * mix(TimeColor.rgb, glcolor.rgb, SkyColorAffectLightmap) ;
+vec3 SkyLighting = LMap.y * mix(glcolor.rgb, TimeColor.rgb,  SkyColorAffectLightmap) ;
 vec3 LightLighting = AdjustLightmapTorch(LMap.x) * vec3(1,0.7,0.5) *(cave * 1);
 
 vec3 Lighting = SkyLighting + LightLighting;
@@ -161,6 +175,7 @@ vec3 viewPos = tmp.xyz / tmp.w;
 vec4 tpos = vec4(shadowLightPosition,1.0)*gbufferProjection;
 tpos = vec4(tpos.xyz/tpos.w,1.0);
 
+vec4 worldPos = gbufferModelViewInverse * vec4(viewPos, 1.0);
 bool isCloud = texture2D(colortex7, TexCoords).x > 0f;
 
 float Depth = texture2D(depthtex0, texcoord.xy).r;
@@ -186,6 +201,13 @@ if (Lightmap.y < 0.915){
   LightmapSmoothColor -= vec4(0.15);
 }
 #endif
+
+#ifdef RenderShadowMap
+vec4 shadowScreen = shadowModelView * worldPos;
+float shadowSample = texture2D(shadowtex0, (shadowProjection * shadowScreen).xy* 0.5 + 0.5).x * 256f;
+float getShadow = clamp(-shadowScreen.z - shadowSample, 0.0, 1.0)*ShadowMapIntensity;
+#endif
+
 //vec4 LightmapSmoothColor = vec4(1,1,1,1) * mix(LightmapSmooth2/4, LightmapSmooth, 0.9);
 vec4 LightmapColor = vec4(LightmapSetup(Lightmap), 1.0);
 
@@ -194,13 +216,21 @@ float FogDist = length(viewPos);
 float Fog = smoothstep(FogStart, FogEnd, FogDist)*FogDensity;
 vec3 FogColor = TimeColor;
 
-float Exposure = clamp(eyeAdaptX, eyeAdaptY,1);
-vec4 Diffuse = color*LightmapColor/ShadowDarkness*(1+LightmapSmoothColor*(ShadowDarkness*ShadowDarkness))  ;
+//float Exposure = clamp(eyeAdaptX, eyeAdaptY,1);
+
+#ifdef RenderShadowMap
+//if (Id == 1 || Id == 2 || Id == 3 || Id == 4){
+  //NdotL = 0.5;
+//}
+//vec4 Diffuse =    color  *LightmapColor*(NdotL+0.75)-getShadow  /ShadowDarkness;
+vec4 Diffuse = color*LightmapColor-getShadow/ShadowDarkness;
+#else
+vec4 Diffuse = color*LightmapColor/ShadowDarkness*(1+LightmapSmoothColor*(ShadowDarkness*ShadowDarkness));
+#endif
 
 #ifdef LinearFog
 Diffuse.rgb = mix(Diffuse.rgb, FogColor, Fog);
 #endif
-
 
 #ifdef Godrays
 vec2 LightPos = tpos.xy/tpos.z;
@@ -243,9 +273,6 @@ for(int i = 0; i < samples; i++) {
   //dEBUG   Diffuse.rgb  = mix(godRayColor,    Diffuse.rgb , 0);
      Diffuse.rgb +=godRayColor;
 
-
-
-
 #endif
 
 //sky
@@ -281,9 +308,8 @@ Diffuse = Diffuse;
 Diffuse.rgb = mix(Diffuse.rgb, FogColor, Fog);
 }
 
-
-
 gl_FragData[0] =Diffuse;
+
 #ifdef DebugMode
 vec4 DebugGbuffer = texture2D(Renderer, texcoord.st);
 gl_FragData[0] =DebugGbuffer;

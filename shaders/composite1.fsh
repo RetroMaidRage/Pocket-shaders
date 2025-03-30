@@ -23,7 +23,7 @@ bool isBright = brightness > 0.7;
        bool isYellow = color.r > 0.9;
 
        #endif
-			 
+
 /* DRAWBUFFERS:4 */
 #ifdef FastMultipassBloom
 if (isBright && isYellow) {

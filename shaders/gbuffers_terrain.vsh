@@ -21,10 +21,14 @@ uniform float rainStrength;
 flat out int BlockID;
 uniform sampler2D normals;
 varying vec3 NormalWT;
+in vec3 at_midBlock;
 //--------------------------------------------DEFINE------------------------------------------
 #define waving_grass
 #define waving_leaves_speed 0.1 ///[0.1 0.2 0.3 0.4 0.5 0.6 0.7 0.8 0.9 1.0 1.1 1.2 1.3 1.4 1.5 1.6 1.7 1.8 1.9 2.0 3.0 4.0 5.0 6.0 7.0 8.0 9.0 10 15 20]
 #define waving_grass_speed 0.07 ///[0.1 0.2 0.3 0.4 0.5 0.6 0.7 0.8 0.9 1.0 1.1 1.2 1.3 1.4 1.5 1.6 1.7 1.8 1.9 2.0 3.0 4.0 5.0 6.0 7.0 8.0 9.0 10 15 20]
+#define FakeGrassAO
+//#define FakeGrassAOBlock
+#define FakeGrassAOIntensity 0.7 ///[0.1 0.2 0.3 0.4 0.5 0.6 0.65 0.7 0.8 0.9 1.0]
 const float pi = 3.14f;
 varying vec3 viewPos;
 
@@ -34,7 +38,7 @@ float Time = max(frameTimeCounter, 1100);
 void main() {
 		SkyPos = (gl_ModelViewMatrix * gl_Vertex).xyz;
 		BlockID = int(mc_Entity.x);
-		//BlockId = mc_Entity.x;
+
     texcoord = (gl_TextureMatrix[0] * gl_MultiTexCoord0).xy;
     lmcoord = (gl_TextureMatrix[1] * gl_MultiTexCoord1).xy;
 
@@ -42,14 +46,13 @@ void main() {
   vec4 vpos = gbufferModelViewInverse*position;
   vworldpos = vpos.xyz + cameraPosition;
 	viewPos = (gl_ModelViewMatrix * gl_Vertex).xyz;
+    vec4 worldPos = gbufferModelViewInverse * vec4(viewPos, 1.0);
 
   #ifdef waving_grass
     if (mc_Entity.x == 2.0 || mc_Entity.x == 3.0 || mc_Entity.x == 4.0 || mc_Entity.x == 10015.0 ) {
 
       float magnitude = sin((tick * pi / (28.0)) + vworldpos.x + vworldpos.z) * 0.055 * (1.0 + rainStrength);
-    //   vpos.x += sin((tick * pi / (28.0 * waving_grass_speed)) + (vworldpos.x + -5.0) * 0.1 + (vworldpos.z + 10.0) * 0.1) * magnitude;
-          //  vpos.z += sin((tick * pi / (28.0 * waving_grass_speed)) + (vworldpos.x + 10.0) * 0.1 + (vworldpos.z + 0.0) * 0.1) * magnitude;
-                //  position.y += sin((tick * pi / (28.0 * speed)) + (position.x + 0.0) * 0.1 + (position.z + 0.0) * 0.1) * magnitude;
+
 
 								vpos.x += sin(pow(tick, 1.0))*magnitude;
 								vpos.z += sin(pow(tick, 1.0))*magnitude;
@@ -93,15 +96,39 @@ float magnitude2 = sin((tick * pi / (28.0)) + vworldpos.x + vworldpos.z) * 0.075
 																			vpos.z += sin(pow(tick, 1.0))*magnitudee/2;
 						//				vpos.z += cos(pow(tick, 1.0)+(vworldpos.x + 1.0+Time)+(vworldpos.z + 1.0+Time)+(vworldpos.y + 11.0+Time)/50)*magnitude;
 	}
+
+
+
 vpos = gbufferModelView * vpos;
 gl_Position = gl_ProjectionMatrix * vpos;
     TexCoords = gl_MultiTexCoord0.st;
     LightmapCoords = mat2(gl_TextureMatrix[1]) * gl_MultiTexCoord1.st;
     LightmapCoords = (LightmapCoords * 33.05f / 32.0f) - (1.05f / 32.0f);
 
+		vec3 worldPos2 = (gl_ModelViewMatrixInverse * gl_Vertex).xyz;
+
+    // Передаем мировые координаты
+
+  vec2 InTexCoords = gl_MultiTexCoord0.st  ;
     Normal = gl_NormalMatrix * gl_Normal;
- 
+		vec4 pos2 = gl_ModelViewMatrix * gl_Vertex;
+		pos2 = gl_ModelViewMatrixInverse * pos2;
+		pos2.xyz += at_midBlock / 64.0;
+	  Color = gl_Color;
 
 
-    Color = gl_Color;
+
+
+#ifdef FakeGrassAO
+				 if ( mc_Entity.x == 2.0){
+					 Color  = gl_Color*   smoothstep(0.5, 0 , at_midBlock.y  )+gl_Color*FakeGrassAOIntensity*smoothstep(0, 0.5 , at_midBlock.y  );
+				 }
+#endif
+#ifdef FakeGrassAOBlock
+				 if (mc_Entity.x == 5.0){
+					 Color  = gl_Color*   smoothstep(0.5, 0 , at_midBlock.y  )+gl_Color*FakeGrassAOIntensity*smoothstep(0, 0.5 , at_midBlock.y  );
+				 }
+#endif
+
+
 }

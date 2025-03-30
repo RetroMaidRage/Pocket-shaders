@@ -5,8 +5,8 @@ uniform sampler2D depthtex0;
 varying vec2 texcoord;
 varying vec4 glcolor;
 
- uniform sampler2D colortex5;
- uniform sampler2D colortex11;
+uniform sampler2D colortex5;
+
 #define FastMultipassBloom
 
 void main() {
