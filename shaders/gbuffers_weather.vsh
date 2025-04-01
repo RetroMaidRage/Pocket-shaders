@@ -18,8 +18,8 @@ void main() {
 	#ifdef waves
 			float speed = 0.1;
 
-				position.x += sin((frameTimeCounter * pi / (28.0 * speed)) + (position.x + 0.0) * 0.1 + (position.z + waves_rain_strenght) * 0.1);
-						position.z += 1.0;
+				position.z += sin((frameTimeCounter * pi / (28.0 * speed)) + (position.x + 0.0) * 0.1 + (position.z + waves_rain_strenght) * 0.1);
+					position.x += sin((frameTimeCounter * pi / (28.0 * speed)) + (position.x + 0.0) * 0.1 + (position.z + waves_rain_strenght) * 0.1);
 						#endif
 gl_Position = gl_ProjectionMatrix * (gl_ModelViewMatrix * position);
 	texcoord = (gl_TextureMatrix[0] * gl_MultiTexCoord0).xy;

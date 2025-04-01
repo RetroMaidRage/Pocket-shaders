@@ -1,5 +1,7 @@
 screen.Misc=§cMisc
+screen.Beta=§c[BETA]§f
 screen.Shadows=Shadows§c[BETA]§f
+screen.RainPuddles=Rain Puddles§c[BETA]§f
 screen.AntiAliasing=AntiAliasing
 screen.Customization = Customization
 

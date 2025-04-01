@@ -5,7 +5,7 @@
 
 #endif
 
-#define SpecularTerrain
+//#define SpecularTerrain
 //----------------------------------------------------UNIFORMS----------------------------------------------
 varying vec2 TexCoords;
 varying vec2 LightmapCoords;
@@ -65,7 +65,7 @@ void main(){
   vec3 TNormals = texture2D(normals, TexCoords).rgb;
   vec3 lightDir = normalize(ShadowLightPosition);
 
-vec3 TextureNormals = normalize(TNormals);
+
 
   vec3 viewDir = -normalize(viewPos);
   vec3 halfDir = normalize(lightDir + viewDir);

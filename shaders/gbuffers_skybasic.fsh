@@ -11,6 +11,7 @@ uniform vec4 texcoord;
 varying vec4 starData; //rgb = star color, a = flag for weather or not this pixel is a star.
 varying vec3 vworldpos;
 uniform float frameTimeCounter;
+
 float fogify(float x, float w) {
 	return w / (x * x + w);
 }
