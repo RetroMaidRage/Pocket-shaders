@@ -38,7 +38,7 @@ float Time = max(frameTimeCounter, 1100);
 void main() {
 		SkyPos = (gl_ModelViewMatrix * gl_Vertex).xyz;
 		BlockID = int(mc_Entity.x);
-
+Normal = gl_NormalMatrix * gl_Normal;
     texcoord = (gl_TextureMatrix[0] * gl_MultiTexCoord0).xy;
     lmcoord = (gl_TextureMatrix[1] * gl_MultiTexCoord1).xy;
 
@@ -79,6 +79,8 @@ void main() {
 												 displacement = clamp(wave, -fy, 1.0-fy);
 												 if(mc_Entity.x == 1.0){
 																vpos.y += displacement/6* (1.0 + rainStrength);
+																						Normal.y += displacement/3* (1.0 + rainStrength);
+
 																}else
 											   {
 												 vpos.y += displacement;
@@ -110,7 +112,7 @@ gl_Position = gl_ProjectionMatrix * vpos;
     // Передаем мировые координаты
 
   vec2 InTexCoords = gl_MultiTexCoord0.st  ;
-    Normal = gl_NormalMatrix * gl_Normal;
+
 		vec4 pos2 = gl_ModelViewMatrix * gl_Vertex;
 		pos2 = gl_ModelViewMatrixInverse * pos2;
 		pos2.xyz += at_midBlock / 64.0;

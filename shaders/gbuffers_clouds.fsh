@@ -10,13 +10,13 @@ varying vec2 lmcoord;
 //--------------------------------------------------------------------------------------------
 void main() {
 
-vec4 color = texture2D(texture, texcoord.st) *glcolor;
+vec4 color = texture2D(texture, vec2(0.0,0)) *glcolor;
 
 //--------------------------------------------------------------------------------------------
 
 /* DRAWBUFFERS:017 */
 
-	gl_FragData[0] =  glcolor; //gcolor
+	gl_FragData[0] =  color; //gcolor
     gl_FragData[1] = vec4(Normal * 0.5f + 0.5f, 1.0f);
 		gl_FragData[2] = vec4(10.0f); //gcolor
 

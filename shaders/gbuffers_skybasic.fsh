@@ -58,7 +58,7 @@ void main() {
 
     float noise = valueNoise(vworldpos.xz*0.5+frameTimeCounter);
 
-vec4 output = mix(vec4(color, 1), vec4(0.7) , noise);
+//vec4 output = mix(vec4(color, 1), vec4(0.7) , noise);
 /* DRAWBUFFERS:0 */
 	gl_FragData[0] = vec4(color, 1.0f);
 }

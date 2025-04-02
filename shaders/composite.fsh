@@ -22,6 +22,7 @@
 #define FlickrIntensity 16  //[0.1 0.2 0.3 0.4 0.5 0.6 0.7 0.8 0.9 1 2 3 4 5 6 7 8 9 10 11 12 13 14 15 16 17 18 19 20 30 40 50]
 
 #define Ambient 0.55
+#define TorchIntensity 1.5
 #define LMapR 1   //[0.1 0.2 0.3 0.4 0.5 0.6 0.7 0.8 0.9 1 1.1 1.2 1.3 1.4 1.5 1.6 1.7 1.8 1.9 2 2.1 2.2 2.3 2.4 2.5 2.6 2.7 2.8 2.9 3 4 5 6 7 8 9 10 15 20 30 40 50]
 #define LMapG 1   //[0.1 0.2 0.3 0.4 0.5 0.6 0.7 0.8 0.9 1 1.1 1.2 1.3 1.4 1.5 1.6 1.7 1.8 1.9 2 2.1 2.2 2.3 2.4 2.5 2.6 2.7 2.8 2.9 3 4 5 6 7 8 9 10 15 20 30 40 50]
 #define LMapB 1  //[0.1 0.2 0.3 0.4 0.5 0.6 0.7 0.8 0.9 1 1.1 1.2 1.3 1.4 1.5 1.6 1.7 1.8 1.9 2 2.1 2.2 2.3 2.4 2.5 2.6 2.7 2.8 2.9 3 4 5 6 7 8 9 10 15 20 30 40 50]
@@ -36,9 +37,14 @@
 #define RainPuddles
 #define PuddlesIntensity 0.8 //[0 0.1 0.2 0.3 0.4 0.5 0.6 0.7 0.8 0.9 1.0 2.0 3.0]
 
-#define SkyColorAffectLightmap 0.25 //[0.1 0.15 0.2 0.25 0.3 0.35 0.4 0.45 0.5 0.55 0.6 0.7 0.7 0.8 0.9 1.0]
+#define SkyColorAffectLightmap 0.75 //[0.1 0.15 0.2 0.25 0.3 0.35 0.4 0.45 0.5 0.55 0.6 0.7 0.7 0.8 0.9 1.0]
+#define LightIntensity 1.0 //[0.1 0.15 0.2 0.25 0.3 0.35 0.4 0.45 0.5 0.55 0.6 0.7 0.7 0.8 0.9 1.0 1.1 1.2 1.3 1.4 1.5 1.6 1.7 1.8 1.9 2.0 3.0]
 #define DetectWaterDepth
+
 //#define Transmittance
+
+#define Reflections
+#define ReflectionIntensity 0.5 //[0.1 0.15 0.2 0.25 0.3 0.35 0.4 0.45 0.5 0.55 0.6 0.7 0.7 0.8 0.9 1.0]
 
 #define Foam
 #define FoamDistance 1.5  //[0.1 0.2 0.3 0.4 0.5 0.6 0.7 0.8 0.9 1 1.1 1.2 1.3 1.4 1.5 1.6 1.7 1.8 1.9 2 2.1 2.2 2.3 2.4 2.5 2.6 2.7 2.8 2.9 3 4 5 6 7 8 9 10 15 20 30 40 50]
@@ -59,6 +65,7 @@ uniform sampler2D colortex2;
 uniform sampler2D colortex6;
 uniform sampler2D colortex7;
 uniform sampler2D colortex8;
+uniform sampler2D colortex9;
 uniform sampler2D depthtex0;
 uniform sampler2D depthtex1;
 uniform sampler2D gaux5;
@@ -67,6 +74,7 @@ uniform vec3 fogColor;
 uniform mat4 gbufferProjection;
 uniform mat4 gbufferProjectionInverse;
 uniform mat4 gbufferModelViewInverse;
+uniform mat4 gbufferModelView;
 uniform vec3 cameraPosition;
 uniform int worldTime;
 uniform float frameTimeCounter;
@@ -81,6 +89,8 @@ uniform sampler2D gaux4;
 uniform ivec2 eyeBrightnessSmooth;
 uniform ivec2 eyeBrightness;
 uniform vec3 upPosition;
+uniform int isEyeInWater;
+
 
 uniform float wetness;
 const float wetnessHalflife = 700.0f;
@@ -140,21 +150,6 @@ vec3 BiliaterBlur(vec2 uv) {
    return color;
 }
 
-float AdjustLightmapTorch(in float torch ) {
-
-
-       float K =1f; //1
-
-       #ifdef Flickr
-       float Time = max(frameTimeCounter, 1000)*FlickrSpeed;
-       float R = 2+ sin(Time)/FlickrIntensity ;
-       #else
-       float R = 2.0f;
-       #endif
-
-      return K * pow(torch, R);
-}
-
 vec3 LightmapSetup(in vec2 LMap)
 {
 
@@ -164,7 +159,18 @@ float undersky = smoothstep(0.69, 0.0, LMap.y);
 //vec3 SkyLighting = LMap.y * mix(glcolor.rgb, TimeColor.rgb,  SkyColorAffectLightmap) + (cave  / 6) ;
 vec3 SkyLighting = LMap.y * mix(glcolor.rgb, TimeColor.rgb,  SkyColorAffectLightmap)  ;///clamp(cave, 1, 1.1)
 //vec3 LightLighting = AdjustLightmapTorch(LMap.x) * vec3(1,0.7,0.5) + (cave * 0.01) ;
-vec3 LightLighting = AdjustLightmapTorch(LMap.x) * vec3(1,0.7,0.5) ;
+float R = 2.0;
+
+#ifdef Flickr
+float Time = max(frameTimeCounter, 1000)*FlickrSpeed;
+R = 2.0  + sin(Time)/FlickrIntensity ;
+#endif
+
+if (LMap.y < 0.1){
+  R = 4.0;
+}
+
+vec3 LightLighting = pow(LMap.x, R) * vec3(1,0.7,0.5) * TorchIntensity;
 //vec3 LightLighting = AdjustLightmapTorch(LMap.x) * vec3(1,0.7,0.5) *(cave * 1) ;
 
 vec3 Lighting = SkyLighting + LightLighting;
@@ -188,15 +194,35 @@ float get_linear_depth(in float depth)
 
 #include "files/noise.glsl"
 
+
+vec3 toScreenSpace(vec3 worldPos) {
+    vec4 clipPos = gbufferProjection * gbufferModelView * vec4(worldPos, 1.0); // Перевод в Clip Space
+    vec3 ndcPos = clipPos.xyz / clipPos.w;  // Перевод в NDC (-1 до 1)
+
+    // Преобразование в координаты экрана (0 до screenSize)
+    vec2 screenPos = (ndcPos.xy * 0.5 + 0.5);
+
+    return vec3(screenPos, ndcPos.z); // z остается для глубины
+}
+
+
+
 void main() {
 
 vec3 screenPos = vec3(TexCoords, texture2D(depthtex0, TexCoords).r);
 vec3 clipPos = screenPos * 2.0 - 1.0;
 vec4 tmp = gbufferProjectionInverse * vec4(clipPos, 1.0);
 vec3 viewPos = tmp.xyz / tmp.w;
+
+
+
 vec4 tpos = vec4(shadowLightPosition,1.0)*gbufferProjection;
 tpos = vec4(tpos.xyz/tpos.w,1.0);
 
+vec2 LightPos = tpos.xy/tpos.z;
+vec2 Godray = LightPos*0.5+0.5;
+
+vec3 viewDirection = normalize(viewPos);
 vec4 worldPos = gbufferModelViewInverse * vec4(viewPos, 1.0);
 
 vec3 feetPlayerPos = worldPos.xyz + gbufferModelViewInverse[3].xyz;
@@ -204,6 +230,7 @@ vec3 worldPos2 = feetPlayerPos + cameraPosition;
 
 bool isCloud = texture2D(colortex7, TexCoords).x > 0f;
 bool isHand =   texture2D(colortex8, TexCoords).x > 0f;
+bool isParticle =   texture2D(colortex9, TexCoords).x > 0f;
 float Depth = texture2D(depthtex0, texcoord.xy).r;
 
 vec3 Normal = normalize(texture2D(colortex1, TexCoords).rgb * 2.0f - 1.0f);
@@ -218,10 +245,10 @@ float LightmapSmooth =  smoothstep(0.915 ,smoothstep(0.91,0.935,1.0 ),Lightmap.y
 //float LightmapSmooth2 =  smoothstep(0.8,0.85,Lightmap.y);
 
 float NdotL = max(dot(Normal, normalize(shadowLightPosition)), 0.0f);
-
+float cave = smoothstep(1.0, 0.7, Lightmap.y);
 if (WorldNormal.y > 0.9) NdotL = 1.0;  // Yeah, i'm a cool programmer
 if (WorldNormal.y < -0.9) NdotL = 0.8;
-if (abs(WorldNormal.y) < 0.5) NdotL = 0.5; // Ни
+if (abs(WorldNormal.y) < 0.5) NdotL = 0.5+(cave /2); // Ни
 
 if (Id == 1.0 || Id == 2.0 || Id == 3.0 || Id == 4.0 || isHand){
  NdotL = 1;
@@ -252,7 +279,7 @@ vec4 LightmapColor = vec4(LightmapSetup(Lightmap), 1.0);
 
 //fog
 float FogDist = length(viewPos)+Raining*20;
-
+  float Fog2Dist =  exp( FogDist *0.075 );
 float Fog = smoothstep(FogStart, FogEnd, FogDist)*FogDensity ;
 vec3 FogColor = TimeColor ;
 
@@ -263,9 +290,9 @@ vec3 FogColor = TimeColor ;
   //NdotL = 0.5;
 //}
 //vec4 Diffuse =    color  *LightmapColor*(NdotL+0.75)-getShadow  /ShadowDarkness;
-vec4 Diffuse = color*NdotL*LightmapColor*getShadow;
+vec4 Diffuse = color*LightIntensity*NdotL*LightmapColor*getShadow;
 #else
-vec4 Diffuse = color*NdotL *LightmapColor/ShadowDarkness*(1+LightmapSmoothColor*(ShadowDarkness*ShadowDarkness)) ;
+vec4 Diffuse = color*LightIntensity*NdotL *LightmapColor/ShadowDarkness*(1+LightmapSmoothColor*(ShadowDarkness*ShadowDarkness)) ;
 #endif
 
 #ifdef LinearFog
@@ -273,8 +300,7 @@ Diffuse.rgb = mix(Diffuse.rgb, FogColor, Fog);
 #endif
 
 #ifdef Godrays
-vec2 LightPos = tpos.xy/tpos.z;
-vec2 Godray = LightPos*0.5+0.5;
+
 vec2 texCoord = texcoord.xy;
 vec2 deltaTexCoord = (texCoord - Godray) * (1.0 / float(samples)) * density;
 
@@ -316,7 +342,26 @@ vec3 lightDir = normalize(shadowLightPosition);
 vec3 viewDir = -normalize(viewPos);
 vec3 halfDir = normalize(lightDir + viewDir);
 
-float  SpecularAngle  = pow(max(dot(halfDir, Normal *texture2D(normals, TexCoords).rgb), 0.0), 8)* 1000;
+#ifdef Reflections
+vec3 reflectColor = vec3(0);
+
+vec3 reflectionDirection = reflect(feetPlayerPos, WorldNormal );
+
+
+
+
+vec3 screenSpaceReflectionPos = toScreenSpace(reflectionDirection);
+
+reflectColor = texture(texture, screenSpaceReflectionPos.xy).rgb;
+
+float borderDistX = min(screenSpaceReflectionPos.x, 1.0 - screenSpaceReflectionPos.x);
+float borderDistY = min(screenSpaceReflectionPos.y, 1.0 - screenSpaceReflectionPos.y);
+float minBorderDist = min(borderDistX, borderDistY);
+
+float fadeFactor = smoothstep(0.0, 0.5, minBorderDist);
+#endif
+
+float  SpecularAngle  = pow(max(dot(halfDir, Normal  *texture2D(normals, TexCoords).rgb), 0.0), 8) * 1000;
 
 #ifdef RainPuddles
  if(Id == 1.0 || isHand){
@@ -329,7 +374,7 @@ float rainPuddles = texture2D(noisetex, (puddlesCoord.xy*8)).x;
 vec4 RainPuddlesTexture = rainPuddles *  texture2D(gaux4, worldPos2.xz)*vec4(0.25,0.25,0.25,1.0)*dot(Normal,normalize(upPosition))*PuddlesIntensity ;
 float undersky = smoothstep(0.0, 1.0, Lightmap.y);
 
- Diffuse += RainPuddlesTexture*(dot(Normal,normalize(upPosition))+SpecularAngle  * undersky)  *Raining;
+ Diffuse += RainPuddlesTexture*   undersky*(dot(Normal,normalize(upPosition))+SpecularAngle  )  *Raining;
   }
 #endif
 
@@ -338,7 +383,23 @@ float undersky = smoothstep(0.0, 1.0, Lightmap.y);
 
 //sky
 if(Depth == 1.0f ){
-    gl_FragData[0] = mix(color, vec4(mix(color.rgb, FogColor, Fog), 1.0), FogAffectSky) ;
+
+  float sunVector = max(dot( viewDirection , normalize(shadowLightPosition)), 0.0);
+  	float sun = pow(sunVector, 5.5);
+
+  	float horizonPos = dot(viewDirection, upPosition);
+  	float smoothHorizonPos 	= pow(max(1.0 - abs(horizonPos) * 0.009  , 0.0), 3.0);
+    float sunDist = distance(smoothHorizonPos, sun);
+//float sunScatter = pow(max(sunDist, 0.0), 15.0); // Чем выше степень, тем резче эффект
+//float sunScatter = pow(max(sun, 0.0),abs(horizonPos*50)); // Чем выше степень, тем резче эффект
+	vec3 horizonVec = normalize(upPosition+viewDirection);
+
+      // float sunDistance = distance(viewVec, clamp(SunVector, -1.0, 1.0));
+     //	 sunDistance = distance(viewVec, clamp(SunVector, -1.0, 1.0));
+vec3 CustomSky = mix(color.rgb , FogColor  , smoothHorizonPos  )  ;
+//vec3 cky = mix(color.rgb, CustomSky, 0.5);
+    gl_FragData[0] =  vec4(CustomSky, 1.0f);
+  //  gl_FragData[0] =   mix(color, vec4(mix(color.rgb, FogColor, Fog), 1.0), FogAffectSky);
     return;
 }
 
@@ -348,6 +409,7 @@ if(isCloud){
 
 if(Id == 1.0){
 #ifdef DetectWaterDepth
+
     float depth_solid = get_linear_depth(texture2D(depthtex0, TexCoords).x);
     float depth_translucent = get_linear_depth(texture2D(depthtex1, TexCoords).x);
 
@@ -356,6 +418,7 @@ if(Id == 1.0){
     vec3 WATER_FOG_COLOR = vec3(0.4, 0.07, 0.03);
     vec3 absorption = exp(-vec3(0.10)/4 * dist_fog) ;
     //Bedrok water Diffuse.rgb *= vec3(76, 97, 86)/128;
+
     #ifdef Foam
     float foam = smoothstep(FoamDistance, 0.0, dist_fog);
     Diffuse.rgb += vec3(0.2)*foam ;
@@ -363,18 +426,33 @@ if(Id == 1.0){
 
     #ifdef Transmittance
     if (dist_fog  < 200){
-          Diffuse.rgb *= absorption+SpecularAngle/1000;
+          Diffuse.rgb *= absorption;
     }
-//float brightness = dot(color, vec3(0.299, 0.587, 0.114));
-    #endif
 
+    #endif
 #endif
-Diffuse = Diffuse;
-Diffuse.rgb = mix(Diffuse.rgb, FogColor, Fog) ;
+
+#ifdef Reflections
+if (isEyeInWater == 1){
+}else{
+Diffuse.rgb = mix(Diffuse.rgb, (mix(reflectColor, Diffuse.rgb, ReflectionIntensity)), fadeFactor);
+}
+#endif
+
+Diffuse = Diffuse+SpecularAngle/1000;
+Diffuse.rgb = mix(Diffuse.rgb, FogColor, Fog)  ;
 }//*texture2D(gaux4,  worldPos2.xz).rgb*2;
 //gl_FragData[0] =Diffuse*texture2D(gaux4,worldPos2.xz/200) +rainPuddles /4 ;
-gl_FragData[0] =Diffuse;
 
+if (isParticle || Depth > 1){
+  Diffuse.rgb = color.rgb;
+}
+
+gl_FragData[0] = Diffuse;
+
+if (isEyeInWater == 1){
+  gl_FragData[0] = mix(Diffuse, vec4(0,0.5,2,1)/2*smoothstep(2, 30, FogDist), 0.5)  ;
+}
 #ifdef DebugMode
 vec4 DebugGbuffer = texture2D(Renderer, texcoord.st);
 gl_FragData[0] =DebugGbuffer;

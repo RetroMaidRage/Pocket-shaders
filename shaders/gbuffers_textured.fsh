@@ -11,6 +11,8 @@ void main() {
 	vec4 color = texture2D(texture, texcoord) * glcolor;
 	color *= texture2D(lightmap, lmcoord);
 
-/* DRAWBUFFERS:0 */
+/* DRAWBUFFERS:09 */
 	gl_FragData[0] = color; //gcolor
+
+		gl_FragData[1] = vec4(10.0f); //gcolor
 }
