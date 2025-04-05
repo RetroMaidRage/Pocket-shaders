@@ -3,12 +3,17 @@
 
 #define LinearFog
 
-#define FogAffectSky 0 //[0 0.1 0.2 0.3 0.4 0.5 0.6 0.7 0.8 0.9 1.0]
+#define FogAffectSky 0.25 //[0 0.1 0.2 0.3 0.4 0.5 0.6 0.7 0.8 0.9 1.0]
 #define FogAffectClouds 0.75 //[0 0.1 0.2 0.3 0.4 0.5 0.6 0.7 0.8 0.9 1.0]
 
 #define FogStart 20     //[0 5 10 20 30 40 50 60 70 80 90 100 200 300 500 1000]
 #define FogEnd 300  //[0 5 10 20 30 40 50 60 70 80 90 100 200 300 500 1000]
 #define FogDensity 1     //[0 0.1 0.2 0.3 0.4 0.5 0.6 0.7 0.8 0.9 1.0 2.0 3.0]
+//#define NoisedFog
+#define NoiseScale 0.001 //[0.0001 0.0002 0.0003 0.0004 0.0005 0.0006 0.0007 0.0075 0.0008 0.0009 0.001 0.002 0.003 0.004 0.005 0.006 0.007 0.008 0.009]
+#define NoiseSpeed 0.00128 //[0.0001 0.0002 0.0003 0.0004 0.0005 0.0006 0.0007 0.0075 0.0008 0.0009 0.001 0.00128 0.002 0.00256 0.003 0.004 0.005 0.00512 0.006 0.007 0.008 0.009]
+
+#define SkyMode CustomSky //[VanillaSky]
 
 #define SmoothShadows
 #define ShadowDarkness 1.25 //[0.1 0.2 0.3 0.4 0.5 0.6 0.7 0.8 0.9 1 1.1 1.2 1.3 1.4 1.5 1.6 1.7 1.8 1.9 2 3 4]
@@ -108,12 +113,7 @@ const bool shadowtexNearest = false;
 const bool shadowcolor0Nearest = false;
 #endif
 
-
 const float ambientOcclusionLevel = 1.0f; //[0.0f 1.0f]
-const float eyeBrightnessHalflife = 3.0f;
-
-float eyeAdaptY = eyeBrightnessSmooth.y / 240.0; //sky
-float eyeAdaptX = eyeBrightnessSmooth.x / 180.0; //block
 
 float Id =  texture2D(colortex6, TexCoords).r * 255;
 
@@ -123,13 +123,18 @@ float TimeNoon     = ((clamp(timefract, 0.0, 4000.0)) / 4000.0) - ((clamp(timefr
 float TimeSunset   = ((clamp(timefract, 8000.0, 12000.0) - 8000.0) / 4000.0) - ((clamp(timefract, 12000.0, 12750.0) - 12000.0) / 750.0);
 float TimeMidnight = ((clamp(timefract, 12000.0, 12750.0) - 12000.0) / 750.0) - ((clamp(timefract, 23000.0, 24000.0) - 23000.0) / 1000.0);
 const float sunPathRotation = -20.0f; //[-240f -120f -90f -60f -30f -20.0f 0f 30f 60f 120f 240f]
-vec3 TimeColor = (fogColor*TimeSunrise +fogColor*TimeNoon + fogColor*TimeSunset +fogColor*TimeMidnight);
+vec3 TimeColor = (fogColor*TimeSunrise +fogColor*vec3(1.0,1.0,1.0)*TimeNoon + fogColor*TimeSunset +fogColor*TimeMidnight);
 //---------------------------------------------------------------------------------------------------------------------------------------------------------------------
 //--------------------------------------------------------------------------------------------
 
 float rand(vec2 co) {
     return fract(sin(dot(co, vec2(12.9898, 78.233))) * 43758.5453);
 }
+
+vec2 Pixelate(vec2 pos, float pixelSize){
+ vec2 pixelatedCoords = floor(pos / pixelSize) * pixelSize;
+ return pixelatedCoords;
+ }
 
 vec3 BiliaterBlur(vec2 uv) {
   vec3 color = texture2D(texture, uv).rgb * 0.2;
@@ -214,8 +219,6 @@ vec3 clipPos = screenPos * 2.0 - 1.0;
 vec4 tmp = gbufferProjectionInverse * vec4(clipPos, 1.0);
 vec3 viewPos = tmp.xyz / tmp.w;
 
-
-
 vec4 tpos = vec4(shadowLightPosition,1.0)*gbufferProjection;
 tpos = vec4(tpos.xyz/tpos.w,1.0);
 
@@ -228,9 +231,11 @@ vec4 worldPos = gbufferModelViewInverse * vec4(viewPos, 1.0);
 vec3 feetPlayerPos = worldPos.xyz + gbufferModelViewInverse[3].xyz;
 vec3 worldPos2 = feetPlayerPos + cameraPosition;
 
+bool IsSky = texture2D(depthtex0, texcoord.xy).r == 1.0f;
 bool isCloud = texture2D(colortex7, TexCoords).x > 0f;
 bool isHand =   texture2D(colortex8, TexCoords).x > 0f;
 bool isParticle =   texture2D(colortex9, TexCoords).x > 0f;
+
 float Depth = texture2D(depthtex0, texcoord.xy).r;
 
 vec3 Normal = normalize(texture2D(colortex1, TexCoords).rgb * 2.0f - 1.0f);
@@ -242,7 +247,6 @@ vec4 color = texture2D(texture, texcoord.st) *glcolor ;
 vec2 Lightmap = texture2D(colortex2, texcoord.xy).xy;
 //shadow_lightmap
 float LightmapSmooth =  smoothstep(0.915 ,smoothstep(0.91,0.935,1.0 ),Lightmap.y);
-//float LightmapSmooth2 =  smoothstep(0.8,0.85,Lightmap.y);
 
 float NdotL = max(dot(Normal, normalize(shadowLightPosition)), 0.0f);
 float cave = smoothstep(1.0, 0.7, Lightmap.y);
@@ -254,10 +258,10 @@ if (Id == 1.0 || Id == 2.0 || Id == 3.0 || Id == 4.0 || isHand){
  NdotL = 1;
 }
 
-vec4 LightmapSmoothColor = vec4(1.0);
-//vec4 LightmapSmoothColor = vec4(1,1,1,1)/6;
+vec4 LightmapSmoothColor = vec4(LMapR,LMapB,LMapG,1);
+
 #ifdef SmoothShadows
- LightmapSmoothColor = vec4(LMapR,LMapB,LMapG,1) * LightmapSmooth ;
+ LightmapSmoothColor *= LightmapSmooth ;
 #else
 if (Lightmap.y < 0.915){
   LightmapSmoothColor -= vec4(0.15);
@@ -274,14 +278,19 @@ float getShadow = smoothstep(shadowCoords.z - shadowMapSmoothness, shadowCoords.
 getShadow = mix(1.0, getShadow, ShadowMapIntensity);
 #endif
 
-//vec4 LightmapSmoothColor = vec4(1,1,1,1) * mix(LightmapSmooth2/4, LightmapSmooth, 0.9);
 vec4 LightmapColor = vec4(LightmapSetup(Lightmap), 1.0);
 
 //fog
 float FogDist = length(viewPos)+Raining*20;
-  float Fog2Dist =  exp( FogDist *0.075 );
 float Fog = smoothstep(FogStart, FogEnd, FogDist)*FogDensity ;
-vec3 FogColor = TimeColor ;
+vec3 FogColor = TimeColor;
+
+#ifdef NoisedFog
+vec2 FogCoord = worldPos2.xz;
+float NoiseFog = texture2D(noisetex, FogCoord*NoiseScale+(frameTimeCounter*NoiseSpeed)).r;
+#endif
+
+
 
 //float Exposure = clamp(eyeAdaptX, eyeAdaptY,1);
 
@@ -296,7 +305,11 @@ vec4 Diffuse = color*LightIntensity*NdotL *LightmapColor/ShadowDarkness*(1+Light
 #endif
 
 #ifdef LinearFog
+#ifdef NoisedFog
+Diffuse.rgb = mix(Diffuse.rgb, FogColor, Fog*NoiseFog);
+#else
 Diffuse.rgb = mix(Diffuse.rgb, FogColor, Fog);
+#endif
 #endif
 
 #ifdef Godrays
@@ -344,11 +357,10 @@ vec3 halfDir = normalize(lightDir + viewDir);
 
 #ifdef Reflections
 vec3 reflectColor = vec3(0);
+float smoothFactor = smoothstep(0.0, 0.5, feetPlayerPos.x);
+
 
 vec3 reflectionDirection = reflect(feetPlayerPos, WorldNormal );
-
-
-
 
 vec3 screenSpaceReflectionPos = toScreenSpace(reflectionDirection);
 
@@ -371,7 +383,7 @@ float  SpecularAngle  = pow(max(dot(halfDir, Normal  *texture2D(normals, TexCoor
  vec2 puddlesCoord = (worldPos2.xz/5000);
 
 float rainPuddles = texture2D(noisetex, (puddlesCoord.xy*8)).x;
-vec4 RainPuddlesTexture = rainPuddles *  texture2D(gaux4, worldPos2.xz)*vec4(0.25,0.25,0.25,1.0)*dot(Normal,normalize(upPosition))*PuddlesIntensity ;
+vec4 RainPuddlesTexture = rainPuddles *0.75 * vec4(0.25,0.25,0.25,1.0)*dot(Normal,normalize(upPosition))*PuddlesIntensity ;
 float undersky = smoothstep(0.0, 1.0, Lightmap.y);
 
  Diffuse += RainPuddlesTexture*   undersky*(dot(Normal,normalize(upPosition))+SpecularAngle  )  *Raining;
@@ -382,25 +394,25 @@ float undersky = smoothstep(0.0, 1.0, Lightmap.y);
 
 
 //sky
-if(Depth == 1.0f ){
+if(IsSky){
 
-  float sunVector = max(dot( viewDirection , normalize(shadowLightPosition)), 0.0);
-  	float sun = pow(sunVector, 5.5);
+float sunVector = max(dot( viewDirection , normalize(shadowLightPosition)), 0.0);
+float sun = pow(sunVector, 5.5);
 
-  	float horizonPos = dot(viewDirection, upPosition);
-  	float smoothHorizonPos 	= pow(max(1.0 - abs(horizonPos) * 0.009  , 0.0), 3.0);
-    float sunDist = distance(smoothHorizonPos, sun);
+float horizonPos = dot(viewDirection, upPosition);
+float smoothHorizonPos 	= pow(max(1.0 - abs(horizonPos) * 0.009  , 0.0), 3.0);
+float sunDist = distance(smoothHorizonPos, sun);
 //float sunScatter = pow(max(sunDist, 0.0), 15.0); // Чем выше степень, тем резче эффект
 //float sunScatter = pow(max(sun, 0.0),abs(horizonPos*50)); // Чем выше степень, тем резче эффект
-	vec3 horizonVec = normalize(upPosition+viewDirection);
+vec3 horizonVec = normalize(upPosition+viewDirection);
 
-      // float sunDistance = distance(viewVec, clamp(SunVector, -1.0, 1.0));
-     //	 sunDistance = distance(viewVec, clamp(SunVector, -1.0, 1.0));
-vec3 CustomSky = mix(color.rgb , FogColor  , smoothHorizonPos  )  ;
+// float sunDistance = distance(viewVec, clamp(SunVector, -1.0, 1.0));
+//	 sunDistance = distance(viewVec, clamp(SunVector, -1.0, 1.0));
+vec4 CustomSky = mix(color , vec4(FogColor, 1.0f)  , smoothHorizonPos); //W.I.P
+vec4 VanillaSky = mix(color, vec4(mix(color.rgb, FogColor, Fog), 1.0), FogAffectSky);
 //vec3 cky = mix(color.rgb, CustomSky, 0.5);
-    gl_FragData[0] =  vec4(CustomSky, 1.0f);
-  //  gl_FragData[0] =   mix(color, vec4(mix(color.rgb, FogColor, Fog), 1.0), FogAffectSky);
-    return;
+gl_FragData[0] =  SkyMode;
+return;
 }
 
 if(isCloud){
@@ -453,6 +465,7 @@ gl_FragData[0] = Diffuse;
 if (isEyeInWater == 1){
   gl_FragData[0] = mix(Diffuse, vec4(0,0.5,2,1)/2*smoothstep(2, 30, FogDist), 0.5)  ;
 }
+
 #ifdef DebugMode
 vec4 DebugGbuffer = texture2D(Renderer, texcoord.st);
 gl_FragData[0] =DebugGbuffer;

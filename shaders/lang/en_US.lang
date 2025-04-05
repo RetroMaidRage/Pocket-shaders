@@ -2,6 +2,7 @@ screen.Misc=§cMisc
 screen.Beta=§c[BETA]§f
 screen.Shadows=Shadows§c[BETA]§f
 screen.RainPuddles=Rain Puddles§c[BETA]§f
+screen.EyeAdaption=Eye Adaption§c[BETA]§f
 screen.AntiAliasing=AntiAliasing
 screen.Customization = Customization
 
@@ -10,4 +11,6 @@ profile.LightmapHigh = §eLightmap §aHigh
 profile.RenderingLow= §6Rendering §eLow
 profile.RenderingHigh = §6Rendering §aHigh
 //§4C§cu§cs§et§6o§2m§2i§az§ba§3t§1i§9o§5n
-option.UseTechFog = UseTechFog(composite7)
+option.RemoveEntityShadow = RemoveEntityShadows§c[Iris]
+option.sunPathRotation = Sun Rotation
+option.Reflections = Planar Reflections

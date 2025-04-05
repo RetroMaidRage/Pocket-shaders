@@ -29,6 +29,7 @@ in vec3 at_midBlock;
 #define FakeGrassAO
 //#define FakeGrassAOBlock
 #define FakeGrassAOIntensity 0.7 ///[0.1 0.2 0.3 0.4 0.5 0.6 0.65 0.7 0.8 0.9 1.0]
+
 const float pi = 3.14f;
 varying vec3 viewPos;
 
@@ -62,42 +63,25 @@ Normal = gl_NormalMatrix * gl_Normal;
 																vpos.z += cos(pow(tick, 1.0)+(cos(vworldpos.x) + cos(8.0+Time))+(cos(vworldpos.z) + sin(5.0+Time))+(vworldpos.y + 11.0+Time))*magnitude;
     }
 
-    if (mc_Entity.x == 10007.0) {
 
-      float magnitude = sin((tick * pi / (28.0)) + vworldpos.x + vworldpos.z) * 0.12 + 0.02 * (1.0 + rainStrength);;
-       vpos.x += sin((tick * pi / (28.0 * waving_leaves_speed)) + (vworldpos.x + 0.0) * 0.1 + (vworldpos.z + 10.0) * 0.1) * magnitude;
-            vpos.y += sin((tick * pi / (28.0 * waving_leaves_speed)) + (vworldpos.x + 0.0) * 0.1 + (vworldpos.z + 0.0) * 0.1) * magnitude;
-    }
 
-		    if (mc_Entity.x == 10008.0 || mc_Entity.x == 1.0 ) {
-					float fy = fract(vworldpos.y + 0.001);
+		 if (mc_Entity.x == 1.0 ) {
+		 float fy = fract(vworldpos.y + 0.001);
 
-						if (fy > 0.002) {
+	   if (fy > 0.002)
+		 {
+
 		 float displacement = 0.0;
-						float wave = 0.085 * sin(2 * pi * (tick*0.75 + vworldpos.x /  7.0 + vworldpos.z / 13.0))
-												 + 0.085 * sin(1 * pi * (tick*0.6 + vworldpos.x / 11.0 + vworldpos.z /  5.0));
-												 displacement = clamp(wave, -fy, 1.0-fy);
-												 if(mc_Entity.x == 1.0){
+		 float wave = 0.085 * sin(2 * pi * (tick*  0.75 + vworldpos.x /  7.0 + vworldpos.z / 13.0))
+                + 0.085 * sin(1 * pi * (tick* 0.6 + vworldpos.x / 11.0 + vworldpos.z /  25.0));
+		 displacement = clamp(wave, -fy, 1.0-fy);
 																vpos.y += displacement/6* (1.0 + rainStrength);
-																						Normal.y += displacement/3* (1.0 + rainStrength);
-
-																}else
-											   {
-												 vpos.y += displacement;
-											   }
-
-											 }}
+																Normal.y += displacement/3* (1.0 + rainStrength);
+		}
+										         }
   #endif
 
-	if (mc_Entity.x == 10011.0) {
-float magnitudee = sin((tick * pi / (28.0))) * 0.10;
-float magnitude2 = sin((tick * pi / (28.0)) + vworldpos.x + vworldpos.z) * 0.075;
-//				vpos.x += sin(pow(tick, 1.0))*magnitude;
-//		vpos.z += sin(pow(tick, 1.0))*magnitude;
-										vpos.x += sin(pow(tick, 1.0))*magnitudee;
-																			vpos.z += sin(pow(tick, 1.0))*magnitudee/2;
-						//				vpos.z += cos(pow(tick, 1.0)+(vworldpos.x + 1.0+Time)+(vworldpos.z + 1.0+Time)+(vworldpos.y + 11.0+Time)/50)*magnitude;
-	}
+
 
 
 
@@ -109,7 +93,7 @@ gl_Position = gl_ProjectionMatrix * vpos;
 
 		vec3 worldPos2 = (gl_ModelViewMatrixInverse * gl_Vertex).xyz;
 
-    // Передаем мировые координаты
+
 
   vec2 InTexCoords = gl_MultiTexCoord0.st  ;
 
